@@ -3,22 +3,13 @@ using System;
 
 public partial class Player : CharacterBody3D
 {
-	[ExportGroup("Player")]
-	[Export]
 	public  float Speed { get; set; } = 5.0f;
-	[Export]
 	public float JumpVelocity { get; set; } = 4.5f;
-	[Export]
-	public float MouseSensitivity { get; set; } = 0.1f;
-	[Export]
-	public int MaxHealth { get; set; } = 100;
-	[Export]
-	public int CurrentHealth { get; set; } = 100;
-	[Export]
-	public string Name { get; set; } = "Player";
+	public float mouseSensitivity = 0.01f;
 
 	private Camera3D _camera;
-	private Vector2 _mouseDelta = Vector2.Zero;
+	private Vector2 _cameraRotation = Vector2.Zero;
+
 
 	// Get the gravity from the project settings to be synced with RigidBody nodes.
 	public float gravity = ProjectSettings.GetSetting("physics/3d/default_gravity").AsSingle();
@@ -26,18 +17,26 @@ public partial class Player : CharacterBody3D
 	public override void _Ready()
 	{
 		_camera = GetNode<Camera3D>("Camera");
+
+		// Hide the mouse cursor and grab it.
 		Input.MouseMode = Input.MouseModeEnum.Captured;
 	}
 
-    public override void _Input(InputEvent @event)
-    {
-			if (@event is InputEventMouseMotion mouseMotionEvent)
-			{
-				_mouseDelta = mouseMotionEvent.Relative;
-			}
-    }
+	public override void _Input(InputEvent @event)
+	{
+		if (@event.IsActionPressed("ui_cancel"))
+		{
+			Input.MouseMode = Input.MouseModeEnum.Visible;
+		}
 
-    public override void _PhysicsProcess(double delta)
+		if (@event is InputEventMouseMotion) {
+			// Input.MouseMode = Input.MouseModeEnum.Captured; // o cara fica bugado aqui para sempre kk
+			InputEventMouseMotion MouseEvent = @event as InputEventMouseMotion;
+			CameraLook(MouseEvent.Relative);
+		}
+	}
+
+  public override void _PhysicsProcess(double delta)
 	{
 		Vector3 velocity = Velocity;
 
@@ -64,14 +63,18 @@ public partial class Player : CharacterBody3D
 			velocity.Z = Mathf.MoveToward(Velocity.Z, 0, Speed);
 		}
 
-		RotateY(Mathf.DegToRad(-_mouseDelta.x * MouseSensitivity));
-		_camera.RotateX(Mathf.DegToRad(-_mouseDelta.y * MouseSensitivity));
-
-		Vector3 cameraRotation = _camera.RotationDegrees;
-		cameraRotation.x = Mathf.Clamp(cameraRotation.x, -90, 90);
-		_camera.RotationDegrees = cameraRotation;
-
 		Velocity = velocity;
 		MoveAndSlide();
+	}
+
+	public void CameraLook(Vector2 relative)
+	{
+		_cameraRotation.X -= relative.Y * mouseSensitivity;
+		_cameraRotation.Y -= relative.X * mouseSensitivity;
+
+		_cameraRotation.X = Mathf.Clamp(_cameraRotation.X, -Mathf.Pi / 2, Mathf.Pi / 2);
+
+		_camera.Rotation = new Vector3(_cameraRotation.X, 0, 0);
+		Rotation = new Vector3(0, _cameraRotation.Y, 0);
 	}
 }
