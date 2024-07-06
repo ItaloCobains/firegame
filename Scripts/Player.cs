@@ -70,9 +70,8 @@ public partial class Player : CharacterBody3D
 	public void CameraLook(Vector2 relative)
 	{
 		_cameraRotation.X -= relative.Y * mouseSensitivity;
-		_cameraRotation.Y -= relative.X * mouseSensitivity;
-
 		_cameraRotation.X = Mathf.Clamp(_cameraRotation.X, -Mathf.Pi / 2, Mathf.Pi / 2);
+		_cameraRotation.Y -= relative.X * mouseSensitivity;
 
 		_camera.Rotation = new Vector3(_cameraRotation.X, 0, 0);
 		Rotation = new Vector3(0, _cameraRotation.Y, 0);
